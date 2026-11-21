@@ -6,6 +6,17 @@
 
 使用 Rust 和 GPUI 实现的 Linux 键盘测试工具。支持 Wayland 和 X11，仅做键盘测试。
 
+## AppImage
+
+x86_64 AppImage 需要 glibc 2.39 或更新版本，以及宿主机的 Vulkan 驱动、XCB（含 XKB）、xkbcommon（含 X11 支持）、Fontconfig 和 Wayland 客户端库。运行不需要 Rust 或 Cargo。
+
+```sh
+chmod +x Keyboard_Tester-x86_64.AppImage
+./Keyboard_Tester-x86_64.AppImage
+```
+
+若系统没有 FUSE，启动时加上 `--appimage-extract-and-run`。自行打包时，在仓库根目录运行 `bash pkgbuild/appimage/build.sh /path/to/appimagetool-x86_64.AppImage /path/to/release/keyboard-tester`。请在计划支持的最旧发行版中编译，AppImage 使用宿主机的库。
+
 ## 运行
 
 需要 Linux 桌面、Vulkan 驱动、C 工具链、`pkg-config`、xcb、xkbcommon（含 X11 支持）和 fontconfig。Rust 版本由 `mise.toml` 指定。

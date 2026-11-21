@@ -6,6 +6,17 @@
 
 A Linux keyboard tester built with Rust and GPUI. Supports Wayland and X11.
 
+## AppImage
+
+Run the x86_64 AppImage on a Linux desktop with glibc 2.39 or newer, a Vulkan driver, and the XCB (including XKB), xkbcommon (including X11 support), Fontconfig, and Wayland client libraries. Rust and Cargo are not needed to run it.
+
+```sh
+chmod +x Keyboard_Tester-x86_64.AppImage
+./Keyboard_Tester-x86_64.AppImage
+```
+
+If FUSE is unavailable, add `--appimage-extract-and-run`. To package your own release binary, run `bash pkgbuild/appimage/build.sh /path/to/appimagetool-x86_64.AppImage /path/to/release/keyboard-tester` from the repository root. Build on the oldest distribution you intend to support; the AppImage uses the host libraries rather than bundling them.
+
 ## Run from source
 
 You need a Linux desktop, a Vulkan driver, a C toolchain, `pkg-config`, XCB, xkbcommon with X11 support, and Fontconfig. The Rust version is pinned in `mise.toml`.

@@ -3,19 +3,21 @@ pkgver=0.1.0
 pkgrel=1
 pkgdesc='Linux keyboard tester with a visual ANSI TKL layout'
 arch=('x86_64')
+license=('MIT')
 depends=('glibc' 'libgcc' 'libxcb' 'libxkbcommon' 'libxkbcommon-x11'
          'fontconfig' 'wayland' 'vulkan-icd-loader' 'vulkan-driver')
-makedepends=('mise' 'pkgconf')
+makedepends=('rust' 'pkgconf')
 optdepends=('hyprland: Pin and position the compact window')
 options=('!debug' '!lto')
 
 build() {
     cd "$startdir/.."
-    mise exec -- cargo build --locked --release --target-dir "$srcdir/cargo-target"
+    cargo build --locked --release --target-dir "$srcdir/cargo-target"
 }
 
 package() {
     install -Dm755 "$srcdir/cargo-target/release/$pkgname" "$pkgdir/usr/bin/$pkgname"
     install -Dm644 "$startdir/$pkgname.desktop" "$pkgdir/usr/share/applications/$pkgname.desktop"
     install -Dm644 "$startdir/$pkgname.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/$pkgname.svg"
+    install -Dm644 "$startdir/../LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
