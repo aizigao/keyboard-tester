@@ -1,0 +1,88 @@
+name: Release Linux packages
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+
+jobs:
+  arch:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build Arch package
+        run: |
+          version=${GITHUB_REF_NAME#v}
+          [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          grep -Fx "version = \"$version\"" Cargo.toml
+          grep -Fx "pkgver=$version" pkgbuild/PKGBUILD
+          grep -Fx 'pkgrel=1' pkgbuild/PKGBUILD
+          docker run --rm -v "$PWD:/work" -w /work -e BUILD_UID="$(id -u)" archlinux:base-devel bash -euc '
+            pacman -Syu --noconfirm --needed rust pkgconf libxcb libxkbcommon-x11 fontconfig wayland vulkan-icd-loader vulkan-swrast
+            useradd -m -u "$BUILD_UID" builder
+            cd pkgbuild
+            runuser -u builder -- makepkg --noconfirm
+          '
+          test -f "pkgbuild/keyboard-tester-$version-1-x86_64.pkg.tar.zst"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arch
+          path: pkgbuild/keyboard-tester-*.pkg.tar.zst
+          if-no-files-found: error
+
+  appimage:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build Ubuntu 24.04 release binary
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libxcb1-dev libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev libfontconfig1-dev
+          rust=$(sed -n 's/^rust = "\([0-9.]*\)"$/\1/p' mise.toml)
+          test -n "$rust"
+          rustup toolchain install "$rust" --profile minimal
+          cargo "+$rust" test --locked
+          cargo "+$rust" build --locked --release
+      - name: Package AppImage
+        run: |
+          tool="$RUNNER_TEMP/appimagetool-x86_64.AppImage"
+          curl --fail --location --retry 3 --output "$tool" \
+            https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage
+          printf '%s  %s\n' ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0 "$tool" | sha256sum --check
+          chmod +x "$tool"
+          bash pkgbuild/appimage/build.sh "$tool" target/release/keyboard-tester
+      - uses: actions/upload-artifact@v4
+        with:
+          name: appimage
+          path: target/Keyboard_Tester-x86_64.AppImage
+          if-no-files-found: error
+
+  publish:
+    needs: [arch, appimage]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=${GITHUB_REF_NAME#v}
+          gh release create "$GITHUB_REF_NAME" \
+            "dist/keyboard-tester-$version-1-x86_64.pkg.tar.zst" \
+            dist/Keyboard_Tester-x86_64.AppImage \
+            --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes

@@ -18,7 +18,7 @@ No Rust, Cargo, or mise is required. After installation, search for `Keyboard Te
 
 ## AppImage
 
-Download [`Keyboard_Tester-x86_64.AppImage`](https://github.com/aizigao/keyboard-tester/releases/download/v0.1.0/Keyboard_Tester-x86_64.AppImage) from GitHub Releases.
+Download [`Keyboard_Tester-x86_64.AppImage`](https://github.com/aizigao/keyboard-tester/releases/latest/download/Keyboard_Tester-x86_64.AppImage) from GitHub Releases.
 
 Run the x86_64 AppImage on a Linux desktop with glibc 2.39 or newer, a Vulkan driver, and the XCB (including XKB), xkbcommon (including X11 support), Fontconfig, and Wayland client libraries. Rust and Cargo are not needed to run it.
 
@@ -75,3 +75,16 @@ KEYBOARD_TESTER_DEVICE=/dev/input/by-id/your-keyboard-event-kbd ./target/debug/k
 The device must already be readable by your user. When the pinned window shows `Background input`, it is sampling the physical held-key state of that keyboard. It does not intercept input, read typed text, or record key order. Very short taps may be missed. Unpinning or exiting stops sampling. Without a device configured, the pinned window detects keys only when focused.
 
 Run unit tests with `mise exec -- cargo test --locked`.
+
+## Publish a release
+
+Update `Cargo.toml`, `Cargo.lock`, and `pkgbuild/PKGBUILD` to the new version (with `pkgrel=1`), then commit and push. Push a matching `vMAJOR.MINOR.PATCH` tag to trigger the [release workflow](.github/workflows/release.yml). It publishes the Arch x86_64 package and the Ubuntu 24.04-built AppImage without overwriting an existing release.
+
+Once both assets are available on GitHub, preview the AUR update on Arch Linux with your AUR SSH key configured and an HTTP proxy listening on `127.0.0.1:7890`. Only the GitHub asset download uses the proxy:
+
+```sh
+./pkgbuild/aur-pub v0.1.1
+./pkgbuild/aur-pub v0.1.1 --push
+```
+
+Only the second command commits and pushes to AUR. Keep published Arch assets unchanged: older AUR recipes may still reference their checksums.

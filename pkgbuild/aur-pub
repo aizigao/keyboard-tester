@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() { printf 'Usage: %s vMAJOR.MINOR.PATCH [--push]\n' "$0"; }
+if [[ ${1:-} == --help && $# == 1 ]]; then
+    usage
+    exit 0
+fi
+if [[ ! ${1:-} =~ ^v([0-9]+\.[0-9]+\.[0-9]+)$ || $# -gt 2 || ( $# == 2 && $2 != --push ) ]]; then
+    usage >&2
+    exit 2
+fi
+
+version=${1#v}
+tag=$1
+asset="keyboard-tester-$version-1-x86_64.pkg.tar.zst"
+url="https://github.com/aizigao/keyboard-tester/releases/download/$tag/$asset"
+template=$(cd -- "$(dirname -- "$0")/aur" && pwd)
+scratch=$(mktemp -d)
+trap 'rm -rf -- "$scratch"' EXIT
+
+curl --proxy http://127.0.0.1:7890 --noproxy '' --fail --location \
+    --connect-timeout 10 --max-time 60 --retry 3 --output "$scratch/$asset" "$url"
+checksum=$(sha256sum "$scratch/$asset")
+checksum=${checksum%% *}
+git clone --branch master ssh://aur@aur.archlinux.org/keyboard-tester-bin.git "$scratch/aur"
+cd "$scratch/aur"
+
+current=$(awk '$1 == "pkgver" && $2 == "=" {print $3; exit}' .SRCINFO)
+if [[ -z $current || $(vercmp "$version" "$current") -lt 0 ]]; then
+    printf 'Cannot publish %s over current AUR version %s\n' "$version" "$current" >&2
+    exit 1
+fi
+sed -e "s/^pkgver=.*/pkgver=$version/" \
+    -e "s/^sha256sums_x86_64=.*/sha256sums_x86_64=('$checksum')/" \
+    "$template/PKGBUILD" > PKGBUILD
+install -m644 "$template/LICENSE" LICENSE
+makepkg --printsrcinfo > .SRCINFO
+
+if git diff --quiet -- PKGBUILD .SRCINFO LICENSE; then
+    printf 'AUR already matches %s.\n' "$tag"
+    exit 0
+fi
+if [[ $(vercmp "$version" "$current") -eq 0 ]]; then
+    printf 'AUR already has version %s with different packaging; refusing to overwrite it.\n' "$version" >&2
+    exit 1
+fi
+SRCDEST="$scratch" makepkg --verifysource
+git diff -- PKGBUILD .SRCINFO LICENSE
+if [[ ${2:-} == --push ]]; then
+    git add PKGBUILD .SRCINFO LICENSE
+    git commit -m "chore(aur): release $tag"
+    git push origin HEAD:master
+else
+    printf 'Preview only. Rerun with --push to publish.\n'
+fi
