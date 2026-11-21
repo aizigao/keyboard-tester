@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Keyboard Tester
+Name[zh_CN]=键盘测试器
+Comment=Test physical keyboard keys
+Comment[zh_CN]=测试键盘按键
+Exec=keyboard-tester
+TryExec=keyboard-tester
+Icon=keyboard-tester
+Terminal=false
+Categories=Utility;
+Keywords=keyboard;keys;input;
+StartupWMClass=keyboard-tester
