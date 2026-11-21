@@ -6,7 +6,19 @@
 
 使用 Rust 和 GPUI 实现的 Linux 键盘测试工具。支持 Wayland 和 X11，仅做键盘测试。
 
+## 在 Arch Linux 上安装
+
+通过 [AUR](https://aur.archlinux.org/packages/keyboard-tester-bin) 安装 x86_64 预编译包：
+
+```sh
+yay -S keyboard-tester-bin
+```
+
+无需 Rust、Cargo 或 mise。安装后可在应用菜单搜索「键盘测试器」或 `Keyboard Tester`。
+
 ## AppImage
+
+从 GitHub Release 下载 [`Keyboard_Tester-x86_64.AppImage`](https://github.com/aizigao/keyboard-tester/releases/download/v0.1.0/Keyboard_Tester-x86_64.AppImage)。
 
 x86_64 AppImage 需要 glibc 2.39 或更新版本，以及宿主机的 Vulkan 驱动、XCB（含 XKB）、xkbcommon（含 X11 支持）、Fontconfig 和 Wayland 客户端库。运行不需要 Rust 或 Cargo。
 
@@ -29,7 +41,7 @@ mise exec -- cargo run --locked
 
 已构建时，可直接执行 `./target/debug/keyboard-tester`。构建请保留 `--locked`：GPUI 0.2.2 的间接依赖 `xattr` 仍使用 libc 在 Linux 上移除的 `ENOATTR`，锁文件保留兼容版本。
 
-### Arch Linux 安装包
+### 从源码构建 Arch Linux 安装包
 
 在仓库根目录运行以下命令。包包含可执行文件、桌面启动项和图标；安装后可从应用菜单搜索「键盘测试器」或 `Keyboard Tester`。
 

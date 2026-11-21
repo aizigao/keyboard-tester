@@ -6,7 +6,19 @@
 
 A Linux keyboard tester built with Rust and GPUI. Supports Wayland and X11.
 
+## Install on Arch Linux
+
+Install the prebuilt x86_64 package from the [AUR](https://aur.archlinux.org/packages/keyboard-tester-bin):
+
+```sh
+yay -S keyboard-tester-bin
+```
+
+No Rust, Cargo, or mise is required. After installation, search for `Keyboard Tester` in your application launcher.
+
 ## AppImage
+
+Download [`Keyboard_Tester-x86_64.AppImage`](https://github.com/aizigao/keyboard-tester/releases/download/v0.1.0/Keyboard_Tester-x86_64.AppImage) from GitHub Releases.
 
 Run the x86_64 AppImage on a Linux desktop with glibc 2.39 or newer, a Vulkan driver, and the XCB (including XKB), xkbcommon (including X11 support), Fontconfig, and Wayland client libraries. Rust and Cargo are not needed to run it.
 
@@ -29,7 +41,7 @@ mise exec -- cargo run --locked
 
 Once built, you can run `./target/debug/keyboard-tester` directly. Keep `--locked` when building: the lockfile pins a version of the transitive `xattr` dependency that works with GPUI 0.2.2 on Linux.
 
-### Arch Linux package
+### Build an Arch Linux package from source
 
 Run these commands from the repository root. The package includes the binary, a desktop entry, and an icon. After installation, search for `Keyboard Tester` in your application launcher.
 
